@@ -1,6 +1,6 @@
 import unittest
 import mock
-from src.wakeupchecker import get_configuration, set_leds, get_time, get_times, get_calculated_time
+from src.wakeupchecker import get_configuration, set_leds, get_time, get_times, get_calculated_time, light_leds
 import os
 import configparser
 import datetime
@@ -45,3 +45,23 @@ class TestWakeupchecker(unittest.TestCase):
         data = datetime.time(6, 50)
         observed = get_calculated_time(data)
         self.assertEquals(observed, expected)
+
+
+    def test_light_leds(self):
+        end_time = datetime.time(5, 10)
+        calculated_end_time = get_calculated_time(end_time)
+        start_time = datetime.time(5, 0)
+        calculated_start_time = get_calculated_time(start_time)
+        wakeup_time = datetime.time(5, 2)
+        calculated_wakeup_time = get_calculated_time(wakeup_time)
+        current = datetime.time(5, 9, 2)
+        green_led = mock.MagicMock()
+        red_led = mock.MagicMock()
+        light_leds(current, end_time, calculated_end_time, start_time, calculated_start_time, wakeup_time, calculated_wakeup_time, green_led, red_led, True, True)
+        self.assertTrue(green_led.off.called and red_led.off.called)
+        current = datetime.time(5, 1, 2)
+        light_leds(current, end_time, calculated_end_time, start_time, calculated_start_time, wakeup_time, calculated_wakeup_time, green_led, red_led, False, True)
+        self.assertTrue(green_led.on.called and red_led.off.called)
+        current = datetime.time(4, 59, 1)
+        light_leds(current, end_time, calculated_end_time, start_time, calculated_start_time, wakeup_time, calculated_wakeup_time, green_led, red_led, False, False)
+        self.assertTrue(green_led.off.called, red_led.on.called)

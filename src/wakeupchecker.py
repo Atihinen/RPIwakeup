@@ -38,6 +38,24 @@ def get_calculated_time(time_obj):
     calculated = (datetime.datetime.combine(datetime.date(1, 1, 1), time_obj) - datetime.timedelta(minutes=1)).time()
     return calculated
 
+def light_leds(current, end_time, calculated_end_time, start_time, calculated_start_time, wakeup_time, calculated_wakeup_time, green_led, red_led, has_woken, has_started):
+    if (end_time > current and calculated_end_time < current) and has_started and has_woken:
+        logging.info("shutting off")
+        green_led.off()
+        red_led.off()
+        has_woken = False
+        has_started = False
+    elif (wakeup_time > current and calculated_wakeup_time < current) and has_started and not has_woken:
+        logging.info("waking")
+        green_led.on()
+        red_led.off()
+        has_woken = True
+    elif (start_time > current and calculated_start_time < current) and not has_started:
+        logging.info("delaying")
+        red_led.on()
+        green_led.off()
+        has_started = True
+
 if __name__ == "__main__":
     logging.basicConfig(filename="wakeup.log", filemode="w", format='%(asctime)s %(message)s', level=logging.INFO)
     config = get_configuration(sys.argv[1])
@@ -50,19 +68,4 @@ if __name__ == "__main__":
     has_woken = False
     while True:
         current = datetime.datetime.now().time()
-        if (end_time > current and calculated_end_time < current) and has_started and has_woken:
-            logging.info("shutting off")
-            green_led.off()
-            red_led.off()
-            has_woken = False
-            has_started = False
-        elif (wakeup_time > current and calculated_wakeup_time < current) and has_started and not has_woken:
-            logging.info("waking")
-            green_led.on()
-            red_led.off()
-            has_woken = True
-        elif (start_time > current and calculated_start_time < current) and not has_started:
-            logging.info("delaying")
-            red_led.on()
-            green_led.off()
-            has_started = True
+        light_leds(current, end_time, calculated_end_time, start_time, calculated_start_time, wakeup_time, calculated_wakeup_time, green_led, red_led, has_woken, has_started)
