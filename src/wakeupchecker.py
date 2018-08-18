@@ -1,71 +1,92 @@
+""" Red led is set on when given time set from configuration is met.
+    After red led the green led is set on when given time from configuration is met.
+    Both leds are set off when given time from configuration is met.
+"""
 import sys
 import os
 import configparser
-from gpiozero import LED
 import datetime
 import logging
+from gpiozero import LED
 
 def get_configuration(cfg_file):
+    """ Returns configuration
+    System exit 1 if configuration file is not found on filesystem
+    """
     if not os.path.isfile(cfg_file):
-        logging.error("Config file %s not found" % cfg_file)
+        logging.error("Config file %s not found", cfg_file)
         sys.exit(1)
-    config = configparser.ConfigParser()
-    config.read(cfg_file)
-    return config
+    cfg = configparser.ConfigParser()
+    cfg.read(cfg_file)
+    return cfg
 
 def set_leds(led_config):
+    """ Returns red and green led based on given led configuration
+    """
     green_led_ind = int(led_config["green_led"])
     red_led_ind = int(led_config["red_led"])
-    green_led = LED(green_led_ind)
-    green_led.off()
-    red_led = LED(red_led_ind)
-    red_led.off()
-    return green_led, red_led
+    gled = LED(green_led_ind)
+    gled.off()
+    rled = LED(red_led_ind)
+    rled.off()
+    return gled, rled
 
 def get_time(time_str):
+    """ Returns datetime time object from given strimg
+    String needs to be in format hours:minutes
+    e.g. "12:00"
+    """
     time_data = time_str.split(":")
     hour = int(time_data[0])
     minute = int(time_data[1])
     return datetime.time(hour, minute)
 
 def get_times(time_config):
-    start_time = get_time(time_config["start_time"])
-    wakeup_time = get_time(time_config["wakeup_time"])
-    end_time = get_time(time_config["end_time"])
-    return start_time, wakeup_time, end_time
+    """ Returns start, wakeup and end times
+    as datetime time objects
+    """
+    stime = get_time(time_config["start_time"])
+    wtime = get_time(time_config["wakeup_time"])
+    etime = get_time(time_config["end_time"])
+    return stime, wtime, etime
 
 def get_calculated_time(time_obj):
-    calculated = (datetime.datetime.combine(datetime.date(1, 1, 1), time_obj) - datetime.timedelta(minutes=1)).time()
+    """ Returns given datetime time object with minus 1 minute
+    """
+    calculated = (datetime.datetime.combine(
+        datetime.date(1, 1, 1), time_obj) - datetime.timedelta(minutes=1)).time()
     return calculated
 
-def light_leds(current, end_time, calculated_end_time, start_time, calculated_start_time, wakeup_time, calculated_wakeup_time, green_led, red_led, has_woken, has_started):
-    if (end_time > current and calculated_end_time < current) and has_started and has_woken:
+def light_leds(current_time, time_container, g_led, r_led):
+    """ Sets green led and red led on and off depending on given times versus current time
+    """
+    e_time = time_container["end_time"]
+    s_time = time_container["start_time"]
+    w_time = time_container["wakeup_time"]
+    if get_calculated_time(e_time) < current_time < e_time:
         logging.info("shutting off")
-        green_led.off()
-        red_led.off()
-        has_woken = False
-        has_started = False
-    elif (wakeup_time > current and calculated_wakeup_time < current) and has_started and not has_woken:
+        g_led.off()
+        r_led.off()
+    elif get_calculated_time(w_time) < current_time < w_time:
         logging.info("waking")
-        green_led.on()
-        red_led.off()
-        has_woken = True
-    elif (start_time > current and calculated_start_time < current) and not has_started:
+        g_led.on()
+        r_led.off()
+    elif get_calculated_time(s_time) < current_time < s_time:
         logging.info("delaying")
-        red_led.on()
-        green_led.off()
-        has_started = True
+        r_led.on()
+        g_led.off()
 
 if __name__ == "__main__":
-    logging.basicConfig(filename="wakeup.log", filemode="w", format='%(asctime)s %(message)s', level=logging.INFO)
-    config = get_configuration(sys.argv[1])
-    green_led, red_led = set_leds(config["leds"])
-    start_time, wakeup_time, end_time = get_times(config["wakeup"])
-    calculated_start_time = get_calculated_time(start_time)
-    calculated_end_time = get_calculated_time(end_time)
-    calculated_wakeup_time = get_calculated_time(wakeup_time)
-    has_started = False
-    has_woken = False
+    logging.basicConfig(filename="wakeup.log", filemode="w",
+                        format='%(asctime)s %(message)s', level=logging.INFO)
+    CONFIG = get_configuration(sys.argv[1])
+    GREEN_LED, RED_LED = set_leds(CONFIG["leds"])
+    START_TIME, WAKEUP_TIME, END_TIME = get_times(CONFIG["wakeup"])
+    TIME_CONTAINER = {
+        "start_time": START_TIME,
+        "end_time": END_TIME,
+        "wakeup_time": WAKEUP_TIME
+    }
     while True:
-        current = datetime.datetime.now().time()
-        light_leds(current, end_time, calculated_end_time, start_time, calculated_start_time, wakeup_time, calculated_wakeup_time, green_led, red_led, has_woken, has_started)
+        CURRENT = datetime.datetime.now().time()
+        light_leds(CURRENT, TIME_CONTAINER, GREEN_LED, RED_LED)
