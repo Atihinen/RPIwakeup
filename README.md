@@ -4,7 +4,9 @@ Sets LEDs on/off based on [configuration file](https://github.com/Atihinen/RPIwa
 Example:
 
 start_time is set to 7:00 and red led pin is 23, then red led is set on at 6:59.
+
 wakeup_time is set to 7:30 and green led pin is 24, then red led is set off at 7:29 and green led is set on at 7:29.
+
 end_time is set to 8:30 and then both leds are set of at 8:29.
 
 ## Requirements
@@ -19,6 +21,10 @@ end_time is set to 8:30 and then both leds are set of at 8:29.
 * Rasbian or something else distro that supports python3
 * (optional, but really recommended) network access (wifi/lan) in order to keep the clock in sync
 
+Example connections:
+
+![Image of connectors](https://raw.githubusercontent.com/Atihinen/RPIwakeup/master/media/raspibplus_example_circuit_diagram_bb.png)
+
 ### Software
 
 * python3
@@ -26,7 +32,7 @@ end_time is set to 8:30 and then both leds are set of at 8:29.
 * git
 
 
-## Setuo
+## Setup
 
 * install needed dependencies and setup cables
 * git clone this repository
