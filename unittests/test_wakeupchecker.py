@@ -62,12 +62,19 @@ class TestWakeupchecker(unittest.TestCase):
         }
         green_led = mock.MagicMock()
         red_led = mock.MagicMock()
-
-        light_leds(current, time_container, green_led, red_led)
+        flags = {
+            "has_started": True,
+            "has_woken": True
+        }
+        light_leds(current, time_container, green_led, red_led, flags)
         self.assertTrue(green_led.off.called and red_led.off.called)
+        flags["has_started"] = True
+        flags["has_woken"] = False
         current = datetime.time(5, 1, 2)
-        light_leds(current, time_container, green_led, red_led)
+        light_leds(current, time_container, red_led, green_led, flags)
         self.assertTrue(green_led.on.called and red_led.off.called)
         current = datetime.time(4, 59, 1)
-        light_leds(current, time_container, green_led, red_led)
+        flags["has_started"] = False
+        flags["has_woken"] = False
+        light_leds(current, time_container, red_led, green_led, flags)
         self.assertTrue(green_led.off.called and red_led.on.called)

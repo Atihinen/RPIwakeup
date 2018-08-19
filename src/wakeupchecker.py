@@ -57,24 +57,31 @@ def get_calculated_time(time_obj):
         datetime.date(1, 1, 1), time_obj) - datetime.timedelta(minutes=1)).time()
     return calculated
 
-def light_leds(current_time, time_container, g_led, r_led):
+def light_leds(current_time, time_container, r_led, g_led, flags):
     """ Sets green led and red led on and off depending on given times versus current time
     """
     e_time = time_container["end_time"]
     s_time = time_container["start_time"]
     w_time = time_container["wakeup_time"]
-    if get_calculated_time(e_time) < current_time < e_time:
+    if get_calculated_time(e_time) < current_time < e_time and \
+       flags["has_started"] and flags["has_woken"]:
         logging.info("shutting off")
         g_led.off()
         r_led.off()
-    elif get_calculated_time(w_time) < current_time < w_time:
+        flags["has_started"] = False
+        flags["has_woken"] = False
+    elif get_calculated_time(w_time) < current_time < w_time and \
+        flags["has_started"] and not flags["has_woken"]:
         logging.info("waking")
         g_led.on()
         r_led.off()
-    elif get_calculated_time(s_time) < current_time < s_time:
+        flags["has_woken"] = True
+    elif get_calculated_time(s_time) < current_time < s_time and \
+        not flags["has_started"] and not flags["has_woken"]:
         logging.info("delaying")
         r_led.on()
         g_led.off()
+        flags["has_started"] = True
 
 if __name__ == "__main__":
     logging.basicConfig(filename="wakeup.log", filemode="w",
@@ -87,6 +94,10 @@ if __name__ == "__main__":
         "end_time": END_TIME,
         "wakeup_time": WAKEUP_TIME
     }
+    FLAGS = {
+        "has_started": False,
+        "has_woken": False
+    }
     while True:
         CURRENT = datetime.datetime.now().time()
-        light_leds(CURRENT, TIME_CONTAINER, GREEN_LED, RED_LED)
+        light_leds(CURRENT, TIME_CONTAINER, RED_LED, GREEN_LED, FLAGS)
