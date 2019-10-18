@@ -17,7 +17,7 @@ pbr==4.2.0
 pylint==2.1.1
 pyparsing==2.2.0
 PyYAML==3.13
-requests==2.19.1
+requests==2.20.0
 safety==1.8.4
 six==1.11.0
 urllib3==1.23
