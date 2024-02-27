@@ -22,7 +22,7 @@ pylint==2.4.3
 pyparsing==2.4.2
 PyYAML==5.4
 requests==2.22.0
-safety==1.8.5
+safety==1.9.0
 six==1.12.0
 terminaltables==3.1.0
 typed-ast==1.4.0
